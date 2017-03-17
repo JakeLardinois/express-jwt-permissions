@@ -6,7 +6,9 @@ var get = require('lodash.get');
 
 var UnauthorizedError = require('./error');
 var PermissionError = new UnauthorizedError(
-  'permission_denied', { message: 'Permission denied' }
+  'permission_denied', {
+    message: 'Permission denied'
+  }
 );
 
 var Guard = function (options) {
@@ -27,7 +29,7 @@ Guard.prototype = {
 
     return _middleware.bind(this);
 
-    function _middleware (req, res, next) {
+    function _middleware(req, res, next) {
       var self = this;
       var options = self._options;
 
