@@ -2,7 +2,7 @@
 
 var util = require('util');
 var xtend = require('xtend');
-var get = require('lodash.get');
+var _ = require('lodash');
 
 var UnauthorizedError = require('./error');
 var PermissionError = new UnauthorizedError(
@@ -21,7 +21,101 @@ var Guard = function (options) {
 };
 
 Guard.prototype = {
+  //Checks if user is a member of any role out of array of roles passed.
+	checkRoleInRoles: function(required) {
+		if (typeof required === 'string') {
+			required = [required];
+		}
 
+		return _middleware.bind(this)
+
+		function _middleware(req, res, next) {
+			var self = this;
+			var options = self._options;
+
+			var user = req[options.requestProperty];
+			if (!user) {
+				return next();
+			}
+
+			var permissions = user[options.permissionsProperty];
+
+			if (!permissions) {
+				return next(new UnauthorizedError('permissions_not_found', {
+					message: 'Could not find permissions for user. Bad configuration?'
+				}));
+			}
+
+			if (!Array.isArray(permissions)) {
+				return next(new UnauthorizedError('permissions_invalid', {
+					message: 'Permissions should be an Array. Bad format?'
+				}));
+			}
+
+			var rolesPermissions = _.filter(permissions, function(perm) {
+				return perm.indexOf('role:') !== -1;
+			});
+
+			var sufficientRoleAccess = false;
+			_.each(rolesPermissions, function(permission) {
+				_.each(required, function(requiredPermission) {
+					if (permission.indexOf(requiredPermission) !== -1) {
+						sufficientRoleAccess = true;
+					}
+				});
+			});
+
+			return next(!sufficientRoleAccess ? PermissionError : null);
+		}
+	},
+	//Checks if user has any of the permissions out of the array of permissions passed.
+	checkPermInPermissions: function(required) {
+		if (typeof required === 'string') {
+			required = [required];
+		}
+
+		return _middleware.bind(this)
+
+		function _middleware(req, res, next) {
+			var self = this;
+			var options = self._options;
+
+			var user = req[options.requestProperty];
+			if (!user) {
+				return next();
+			}
+
+			var permissions = user[options.permissionsProperty];
+
+			if (!permissions) {
+				return next(new UnauthorizedError('permissions_not_found', {
+					message: 'Could not find permissions for user. Bad configuration?'
+				}));
+			}
+
+			if (!Array.isArray(permissions)) {
+				return next(new UnauthorizedError('permissions_invalid', {
+					message: 'Permissions should be an Array. Bad format?'
+				}));
+			}
+
+			var permissionsOnly = _.filter(permissions, function(perm) {
+				return perm.indexOf('role:') === -1;
+			});
+
+			var sufficientPermissionsAccess = false;
+			_.each(permissionsOnly, function(permission) {
+				_.each(required, function(requiredPermission) {
+					if (permission.indexOf(requiredPermission) !== -1) {
+						sufficientPermissionsAccess = true;
+					}
+				});
+			});
+
+			return next(!sufficientPermissionsAccess ? PermissionError : null);
+		}
+	},
+	//original check; is inclusive so that all 'required' must be in the permissions array
   check: function (required) {
     if (typeof required === 'string') {
       required = [required];
@@ -46,7 +140,7 @@ Guard.prototype = {
         }));
       }
 
-      var permissions = get(user, options.permissionsProperty, undefined)
+      var permissions = _.get(user, options.permissionsProperty, undefined)
       if (!permissions) {
         return next(new UnauthorizedError('permissions_not_found', {
           message: 'Could not find permissions for user. Bad configuration?'
