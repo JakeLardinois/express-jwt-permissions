@@ -4,6 +4,7 @@ var util = require('util');
 var xtend = require('xtend');
 var get = require('lodash.get');
 var foreach = require('lodash.foreach');
+var filter = require('lodash.filter');
 
 var UnauthorizedError = require('./error');
 var PermissionError = new UnauthorizedError(
@@ -53,7 +54,7 @@ Guard.prototype = {
 				}));
 			}
 
-			var rolesPermissions = _.filter(permissions, function(perm) {
+			var rolesPermissions = filter(permissions, function(perm) {
 				return perm.indexOf('role:') !== -1;
 			});
 
@@ -100,7 +101,7 @@ Guard.prototype = {
 				}));
 			}
 
-			var permissionsOnly = _.filter(permissions, function(perm) {
+			var permissionsOnly = filter(permissions, function(perm) {
 				return perm.indexOf('role:') === -1;
 			});
 
