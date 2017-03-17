@@ -2,7 +2,8 @@
 
 var util = require('util');
 var xtend = require('xtend');
-var _ = require('lodash');
+var get = require('lodash.get');
+var foreach = require('lodash.foreach');
 
 var UnauthorizedError = require('./error');
 var PermissionError = new UnauthorizedError(
@@ -57,8 +58,8 @@ Guard.prototype = {
 			});
 
 			var sufficientRoleAccess = false;
-			_.each(rolesPermissions, function(permission) {
-				_.each(required, function(requiredPermission) {
+			foreach(rolesPermissions, function(permission) {
+				foreach(required, function(requiredPermission) {
 					if (permission.indexOf(requiredPermission) !== -1) {
 						sufficientRoleAccess = true;
 					}
@@ -104,8 +105,8 @@ Guard.prototype = {
 			});
 
 			var sufficientPermissionsAccess = false;
-			_.each(permissionsOnly, function(permission) {
-				_.each(required, function(requiredPermission) {
+			foreach(permissionsOnly, function(permission) {
+				foreach(required, function(requiredPermission) {
 					if (permission.indexOf(requiredPermission) !== -1) {
 						sufficientPermissionsAccess = true;
 					}
@@ -140,7 +141,7 @@ Guard.prototype = {
         }));
       }
 
-      var permissions = _.get(user, options.permissionsProperty, undefined)
+      var permissions = get(user, options.permissionsProperty, undefined)
       if (!permissions) {
         return next(new UnauthorizedError('permissions_not_found', {
           message: 'Could not find permissions for user. Bad configuration?'
